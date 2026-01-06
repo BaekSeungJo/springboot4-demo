@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Gradle ###
+.gradle
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+
+# 캐시 및 로그
+.gradle/
+build/

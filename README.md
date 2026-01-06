@@ -19,7 +19,7 @@
 - ```
   git tag -a 001-http-service-clients -m "http-service-clients 학습"
   git push origin 001-http-service-clients
-  ```
+  ```[.gitignore](.gitignore)
 
 
 
@@ -29,4 +29,5 @@
 
 - feat/001-http-service-clients
 - feat/002-api-versioning
+- feat/003-resilience-pattern
 

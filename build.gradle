@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'springboot4-demo'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri('https://repo.spring.io/milestone')
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // AOP 의존성 필수
+    // aop 의존성 없이는 @CircuitBreaker 어노테이션이 동작하지 않음
+    implementation 'org.springframework.boot:spring-boot-starter-aop:4.0.0-M2'
+
+    // Resilience4j - Circuit Breaker
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+
+    // Micrometer for metrics
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

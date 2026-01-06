@@ -1,3 +1,135 @@
 spring:
   application:
     name: springboot4-demo
+
+# Actuator 설정 - Circuit Breaker 모니터링
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, circuitbreakers, circuitbreakerevents, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+# ==========================================================================
+# Circuit Breaker 상세 설정
+# ==========================================================================
+resilience4j:
+  circuitbreaker:
+    # 공통 설정 (configs)
+    configs:
+      # 기본 설정 - 다른 인스턴스에서 상속 가능
+      default:
+        # ----------------------------------------------------------------
+        # 슬라이딩 윈도우 설정
+        # ----------------------------------------------------------------
+        # COUNT_BASED: 최근 N개의 호출을 기준으로 실패율 계산
+        # TIME_BASED: 최근 N초 동안의 호출을 기준으로 실패율 계산
+        sliding-window-type: count_based
+
+        # 슬라이딩 윈도우 크기
+        # COUNT_BASED: 최근 호출 개수 (예: 10개)
+        # TIME_BASED: 초 단위 시간 (예: 10초)
+        sliding-window-size: 10
+
+        # 실패율 계산을 시작하기 위한 최소 호출 수
+        # 이 수치 미만의 호출에서는 Circuit이 열리지 않음
+        minimum-number-of-calls: 5
+
+        # ----------------------------------------------------------------
+        # 실패율 임계값 설정
+        # ----------------------------------------------------------------
+        # 이 비율 이상 실패하면 OPEN 상태로 전환 (%)
+        failure-rate-threshold: 50
+
+        # ----------------------------------------------------------------
+        # OPEN 상태 설정
+        # ----------------------------------------------------------------
+        # OPEN 상태 유지 시간 (이후 HALF_OPEN 상태로 전환)
+        wait-duration-in-open-state: 30s
+
+        # true : waitDuration 후 자동으로 HALF_OPEN 상태로 전환
+        # false : 다음 호출 시 HALF_OPEN 상태로 전환
+        automatic-transition-from-open-to-half-open-enabled: true
+
+        # ----------------------------------------------------------------
+        # HALF_OPEN 상태 설정
+        # ----------------------------------------------------------------
+        # HALF_OPEN 상태에서 허용할 테스트 호출 수
+        permitted-number-of-calls-in-half-open-state: 3
+
+        # ----------------------------------------------------------------
+        # 느린 호출 설정
+        # ----------------------------------------------------------------
+        # 이 시간을 초과하면 "느린 호출"로 간주
+        slow-call-duration-threshold: 2s
+
+        # 느린 호출 비율이 이 값을 초과하면 OPEN (%)
+        slow-call-rate-threshold: 80
+
+        # ----------------------------------------------------------------
+        # 예외 처리 설정
+        # ----------------------------------------------------------------
+        # 실패로 기록할 예외 목록
+        record-exceptions:
+          - java.io.IOException
+          - java.net.ConnectException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.HttpServerErrorException
+          - com.example.springboot4demo.exception.ServiceException
+
+        # 실패로 기록하지 않을 예외 목록 (비즈니스 예외)
+        ignore-exceptions:
+          - com.example.springboot4demo.exception.BusinessException
+          - jakarta.validation.ValidationException
+
+      # 민감한 서비스용 설정 (결제 등)
+      sensitive:
+        sliding-window-type: count_based
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 30          # 더 민감하게 (30% 실패 시 OPEN)
+        wait-duration-in-open-state: 60s    # 더 긴 대기 시간
+        permitted-number-of-calls-in-half-open-state: 5
+        slow-call-duration-threshold: 1s    # 더 짧은 타임아웃
+        slow-call-rate-threshold: 50
+
+    # 개별 인스턴스 설정
+    instances:
+      # 결제 서비스 - 민감한 설정 적용
+      paymentService:
+        base-config: sensitive
+        # 개별 설정으로 어버라이드 가능
+        failure-rate-threshold: 25
+        wait-duration-in-open-state: 120s
+
+      # 외부 API - 기본 설정 적용
+      externalApi:
+        base-config: default
+        sliding-window-size: 20
+        slow-call-duration-threshold: 3s
+
+      # 재고 서비스 - 커스텀 설정
+      inventoryService:
+        base-config: default
+        failure-rate-threshold: 60
+        wait-duration-in-open-state: 15s
+        permitted-number-of-calls-in-half-open-state: 2
+
+# 로깅 설정
+logging:
+  level:
+    io.github.resilience4j: DEBUG
+    com.example.springboot4demo: DEBUG
+
+
+
+
+
+
+
+
